@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>911 Turbo S — Engineered Without Compromise</title>
+<meta name="description" content="Porsche 911 Turbo S (992). 641 bhp. 800 Nm. 2.7 seconds. Engineered without compromise." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@300;500;600;700;800;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+/* ============================================================
+   TOKENS
+============================================================ */
+:root{
+  --void:#0a0a0b;
+  --void-2:#111113;
+  --carbon:#19191c;
+  --carbon-2:#212124;
+  --line: rgba(236,232,225,.10);
+  --line-strong: rgba(236,232,225,.20);
+  --platinum:#ece8e1;
+  --steel:#a3a6ac;
+  --steel-dim:#74777d;
+  --gold:#c8a464;
+  --gold-bright:#ecce93;
+  --red:#a8121f;
+  --ease: cubic-bezier(.16,.84,.2,1);
+  --display: "Big Shoulders Display", sans-serif;
+  --body: "Inter", system-ui, sans-serif;
+  --mono: "JetBrains Mono", monospace;
+  --glass: rgba(10,10,11,.62);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} }
+body{
+  background:var(--void);
+  color:var(--platinum);
+  font-family:var(--body);
+  cursor:default;
+  -webkit-font-smoothing:antialiased;
+}
+img,video{display:block;max-width:100%;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;background:none;border:none;color:inherit;cursor:pointer;}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:clamp(20px,5vw,64px);}
+.eyebrow{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--gold);
+  display:flex;align-items:center;gap:10px;
+}
+.eyebrow::before{content:"";width:18px;height:1px;background:var(--gold);}
+::selection{background:var(--gold);color:var(--void);}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+
+/* ============================================================
+   LOADER
+============================================================ */
+#loader{
+  position:fixed;inset:0;z-index:9999;background:var(--void);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+  transition:opacity .7s var(--ease), visibility .7s var(--ease);
+}
+#loader.done{opacity:0;visibility:hidden;pointer-events:none;}
+.loader-mark{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.3em;color:var(--steel);}
+.gauge{position:relative;width:120px;height:120px;}
+.gauge svg{transform:rotate(-90deg);}
+.gauge-track{fill:none;stroke:var(--line);stroke-width:3;}
+.gauge-fill{fill:none;stroke:var(--gold);stroke-width:3;stroke-linecap:round;stroke-dasharray:326;stroke-dashoffset:326;}
+.gauge-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:14px;color:var(--gold-bright);letter-spacing:.05em;}
+
+/* ============================================================
+   PERSISTENT FIXED VIDEO BACKGROUND — runs behind the whole page
+============================================================ */
+.video-bg{position:fixed;inset:0;z-index:-3;overflow:hidden;background:var(--void);}
+.video-bg video, .video-bg #stageFallback{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  filter:brightness(.62) contrast(1.05);
+  transition:opacity .5s var(--ease);
+}
+#stageFallback{opacity:0;z-index:1;filter:brightness(.55) contrast(1.05) saturate(1.05);}
+.video-off #heroVideo{opacity:0;}
+.video-off #stageFallback{opacity:1;}
+.video-bg .veil{
+  position:absolute;inset:0;z-index:2;
+  background:
+    linear-gradient(180deg, rgba(8,8,9,.32) 0%, rgba(8,8,9,.18) 22%, rgba(8,8,9,.38) 55%, rgba(8,8,9,.62) 100%);
+}
+.particles{position:absolute;inset:0;z-index:2;pointer-events:none;}
+.particles span{
+  position:absolute;width:2px;height:2px;border-radius:50%;background:var(--gold-bright);
+  opacity:0;animation:drift 9s linear infinite;
+}
+@keyframes drift{
+  0%{opacity:0;transform:translateY(0) translateX(0);}
+  10%{opacity:.55;} 90%{opacity:.3;}
+  100%{opacity:0;transform:translateY(-160px) translateX(var(--dx,20px));}
+}
+
+/* ============================================================
+   BOOST PROGRESS BAR
+============================================================ */
+#boost-bar{position:fixed;top:0;left:0;height:2px;width:0%;background:linear-gradient(90deg,var(--gold),var(--red));z-index:1000;transition:width .05s linear;}
+#boost-readout{position:fixed;top:14px;right:clamp(20px,5vw,64px);z-index:998;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--steel);display:none;gap:6px;align-items:baseline;}
+#boost-readout span{color:var(--gold-bright);font-size:11px;}
+@media (min-width:860px){ #boost-readout{display:flex;} }
+
+/* ============================================================
+   CURSOR GLOW
+============================================================ */
+#cursor-glow{position:fixed;top:0;left:0;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle, rgba(200,164,100,.10), transparent 70%);pointer-events:none;z-index:5;transform:translate(-50%,-50%);will-change:transform;display:none;}
+@media (min-width:860px) and (hover:hover){ #cursor-glow{display:block;} }
+
+/* ============================================================
+   CONTROL CLUSTER — always-visible video/sound toggles
+============================================================ */
+.controls{position:fixed;bottom:24px;right:clamp(20px,5vw,64px);z-index:600;display:flex;flex-direction:column;gap:10px;align-items:center;}
+.ctrl-btn{width:42px;height:42px;border:1px solid var(--line-strong);border-radius:50%;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);color:var(--platinum);background:rgba(10,10,11,.45);transition:border-color .25s, color .25s;}
+.ctrl-btn:hover{border-color:var(--gold);color:var(--gold-bright);}
+.ctrl-btn.is-off{color:var(--steel-dim);border-color:var(--line);}
+.ctrl-btn svg{width:16px;height:16px;}
+
+/* ============================================================
+   NAV
+============================================================ */
+header{position:fixed;top:0;left:0;right:0;z-index:900;padding:22px clamp(20px,5vw,64px) 0;display:flex;align-items:center;justify-content:space-between;transition:padding .4s var(--ease), background .4s var(--ease), border-color .4s var(--ease);border-bottom:1px solid transparent;}
+header.scrolled{padding-top:14px;padding-bottom:14px;background:rgba(10,10,11,.78);backdrop-filter:blur(16px) saturate(140%);border-bottom-color:var(--line);}
+.logo{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:.32em;color:var(--platinum);}
+nav.links{display:none;gap:36px;font-size:13px;letter-spacing:.04em;color:var(--steel);}
+nav.links a{position:relative;padding:6px 0;transition:color .3s;}
+nav.links a::after{content:"";position:absolute;left:0;bottom:0;width:0;height:1px;background:var(--gold);transition:width .35s var(--ease);}
+nav.links a:hover{color:var(--platinum);}
+nav.links a:hover::after{width:100%;}
+@media (min-width:860px){ nav.links{display:flex;} }
+.nav-burger{display:flex;width:34px;height:34px;align-items:center;justify-content:center;border:1px solid var(--line-strong);border-radius:50%;}
+@media (min-width:860px){ .nav-burger{display:none;} }
+.nav-burger span{display:block;width:12px;height:1px;background:var(--platinum);position:relative;}
+.nav-burger span::before,.nav-burger span::after{content:"";position:absolute;width:12px;height:1px;background:var(--platinum);left:0;}
+.nav-burger span::before{top:-4px;} .nav-burger span::after{top:4px;}
+#mnav{position:fixed;inset:0;z-index:899;background:rgba(10,10,11,.97);display:flex;flex-direction:column;justify-content:center;gap:28px;padding:0 32px;transform:translateY(-100%);transition:transform .5s var(--ease);}
+#mnav.open{transform:translateY(0);}
+#mnav a{font-family:var(--display);font-size:34px;font-weight:600;color:var(--platinum);}
+
+/* ============================================================
+   HERO — sits directly on raw video, no panel
+============================================================ */
+.hero{position:relative;z-index:10;height:100svh;min-height:560px;display:flex;flex-direction:column;justify-content:center;}
+.hero-content{position:relative;z-index:2;text-align:center;padding-top:64px;}
+.hero-kicker{font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:var(--gold-bright);text-transform:uppercase;margin-bottom:18px;opacity:.9;}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(40px,9.5vw,128px);line-height:.94;letter-spacing:-.01em;color:var(--platinum);text-shadow:0 20px 60px rgba(0,0,0,.5);}
+.hero h1 em{font-style:normal;color:transparent;-webkit-text-stroke:1.5px var(--platinum);}
+.hero .headline{font-family:var(--body);font-weight:300;font-size:clamp(16px,2.4vw,22px);color:var(--steel);margin:22px auto 6px;max-width:560px;letter-spacing:.01em;}
+.hero .sub{font-family:var(--mono);font-size:13px;letter-spacing:.12em;color:var(--gold-bright);margin-top:14px;}
+.hero-ctas{display:flex;gap:16px;justify-content:center;margin-top:40px;flex-wrap:wrap;}
+.btn{position:relative;font-size:13px;letter-spacing:.08em;padding:16px 30px;border-radius:2px;display:inline-flex;align-items:center;gap:10px;transition:transform .25s var(--ease), background .25s, border-color .25s, color .25s;}
+.btn-primary{background:var(--platinum);color:var(--void);}
+.btn-primary:hover{background:var(--gold-bright);}
+.btn-ghost{border:1px solid var(--line-strong);color:var(--platinum);backdrop-filter:blur(6px);}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold-bright);}
+.btn svg{width:13px;height:13px;}
+.scroll-cue{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--steel);}
+.scroll-cue .line{width:1px;height:38px;background:linear-gradient(180deg,var(--gold),transparent);overflow:hidden;position:relative;}
+.scroll-cue .line::after{content:"";position:absolute;top:-100%;left:0;width:100%;height:100%;background:var(--gold-bright);animation:fall 1.8s ease-in-out infinite;}
+@keyframes fall{ to{top:100%;} }
+
+/* ============================================================
+   SECTION GENERIC + GLASS PANEL
+============================================================ */
+section{position:relative;z-index:10;}
+.section-pad{padding:90px 0;}
+@media (max-width:640px){ .section-pad{padding:60px 0;} }
+.glass{
+  padding:clamp(24px,4vw,48px) clamp(4px,2vw,12px);
+}
+.section-head{display:flex;flex-direction:column;gap:18px;margin-bottom:56px;}
+.section-title{font-family:var(--display);font-weight:700;font-size:clamp(30px,4.6vw,54px);line-height:1.03;letter-spacing:-.01em;max-width:760px;}
+.section-title .accent{color:var(--gold);}
+
+/* ============================================================
+   STORY
+============================================================ */
+.story-statement{text-align:center;padding-bottom:56px;}
+.story-statement h2{font-family:var(--display);font-weight:800;font-size:clamp(32px,7vw,96px);line-height:.98;letter-spacing:-.01em;}
+.story-statement h2 .num{color:var(--gold-bright);}
+.story-statement p{font-family:var(--mono);color:var(--steel);font-size:13px;letter-spacing:.15em;margin-top:18px;text-transform:uppercase;}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+@media (min-width:780px){ .stat-grid{grid-template-columns:repeat(4,1fr);} }
+.stat-card{background:rgba(10,10,11,.5);padding:32px 24px;text-align:left;display:flex;flex-direction:column;gap:10px;}
+.stat-card .v{font-family:var(--display);font-weight:700;font-size:clamp(32px,4vw,48px);color:var(--platinum);}
+.stat-card .v sup{font-size:.4em;color:var(--gold);margin-left:4px;}
+.stat-card .l{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--steel);text-transform:uppercase;}
+
+/* ============================================================
+   SPECS
+============================================================ */
+.specs-grid{display:grid;gap:48px;align-items:center;}
+@media (min-width:960px){ .specs-grid{grid-template-columns:.85fr 1.15fr;} }
+.turbine-wrap{display:flex;align-items:center;justify-content:center;position:relative;height:340px;}
+.turbine{position:relative;width:280px;height:280px;}
+.ring{position:absolute;inset:0;border:1px solid var(--line-strong);border-radius:50%;}
+.ring.r2{inset:34px;border-color:var(--line);}
+.ring.r3{inset:68px;}
+.fins{position:absolute;inset:68px;border-radius:50%;animation:spin 7s linear infinite;}
+.fins svg{width:100%;height:100%;}
+@keyframes spin{ to{transform:rotate(360deg);} }
+.turbine-core{position:absolute;inset:110px;border-radius:50%;background:radial-gradient(circle at 35% 30%, var(--carbon-2), var(--void) 70%);border:1px solid var(--line-strong);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.turbine-core .rpm{font-family:var(--mono);font-size:20px;color:var(--gold-bright);}
+.turbine-core .rpm-l{font-family:var(--mono);font-size:9px;letter-spacing:.15em;color:var(--steel);margin-top:4px;}
+.turbine-orbit{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px var(--gold-bright);top:50%;left:50%;animation:orbit 4s linear infinite;}
+@keyframes orbit{ to{transform:rotate(360deg) translateX(140px) rotate(-360deg);} }
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:32px;flex-wrap:wrap;}
+.tab{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:14px 0;margin-right:32px;color:var(--steel);position:relative;}
+.tab.active{color:var(--platinum);}
+.tab.active::after{content:"";position:absolute;bottom:-1px;left:0;right:0;height:1px;background:var(--gold);}
+.spec-panel{display:none;}
+.spec-panel.active{display:block;}
+.spec-row{display:flex;justify-content:space-between;align-items:baseline;gap:20px;padding:15px 0;border-bottom:1px solid var(--line);opacity:0;transform:translateY(10px);}
+.spec-row .k{font-size:14px;color:var(--steel);}
+.spec-row .v{font-family:var(--mono);font-size:14px;color:var(--platinum);text-align:right;letter-spacing:.02em;}
+
+/* ============================================================
+   NUMBERS
+============================================================ */
+.numbers-grid{display:grid;grid-template-columns:1fr;gap:1px;}
+@media (min-width:680px){ .numbers-grid{grid-template-columns:repeat(2,1fr);} }
+@media (min-width:1000px){ .numbers-grid{grid-template-columns:repeat(4,1fr);} }
+.num-card{padding:44px 12px;text-align:center;border:1px solid var(--line);background:rgba(10,10,11,.35);}
+.num-card .big{font-family:var(--display);font-weight:800;font-size:clamp(48px,6vw,84px);color:var(--platinum);line-height:1;}
+.num-card .unit{font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-top:10px;display:block;}
+
+/* ============================================================
+   GALLERY
+============================================================ */
+.gallery-pin{min-height:auto;display:flex;flex-direction:column;justify-content:center;padding:80px 0;}
+.gallery-track{
+  display:flex;gap:24px;
+  padding-left:clamp(20px,5vw,64px);
+  padding-right:clamp(20px,5vw,64px);
+  padding-bottom:8px;
+  overflow-x:auto;
+  scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+  scrollbar-color:var(--gold) transparent;
+}
+.gallery-track::-webkit-scrollbar{height:6px;}
+.gallery-track::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:3px;}
+.gallery-track::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+.g-card{position:relative;flex:0 0 auto;width:min(78vw,420px);scroll-snap-align:start;}
+.g-card img{width:100%;height:520px;object-fit:cover;border-radius:4px;filter:saturate(1.05) contrast(1.02);border:1px solid var(--line-strong);}
+@media (max-width:640px){ .g-card img{height:400px;} }
+.g-card .tag{position:absolute;left:16px;bottom:16px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--platinum);background:rgba(10,10,11,.6);backdrop-filter:blur(6px);padding:8px 12px;border:1px solid var(--line-strong);}
+.g-card .idx{position:absolute;top:16px;right:16px;font-family:var(--mono);font-size:11px;color:var(--gold-bright);}
+.gallery-mobile-hint{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--steel-dim);margin-top:20px;text-transform:uppercase;}
+
+/* ============================================================
+   FINAL CTA
+============================================================ */
+.final{padding:120px 0;text-align:center;}
+.final h2{font-family:var(--display);font-weight:800;font-size:clamp(36px,6.4vw,76px);line-height:1;}
+.final p{color:var(--steel);max-width:520px;margin:24px auto 40px;font-size:16px;line-height:1.6;}
+
+/* ============================================================
+   FOOTER
+============================================================ */
+footer{position:relative;z-index:10;padding:40px 0 30px;}
+.foot-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:24px;align-items:center;}
+.foot-links{display:flex;gap:26px;font-size:13px;color:var(--steel);flex-wrap:wrap;}
+.foot-links a:hover{color:var(--gold-bright);}
+.foot-social{display:flex;gap:16px;}
+.foot-social a{width:32px;height:32px;border:1px solid var(--line-strong);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;}
+.foot-social a:hover{border-color:var(--gold);color:var(--gold-bright);}
+.foot-fine{font-family:var(--mono);font-size:11px;color:var(--steel-dim);margin-top:24px;letter-spacing:.04em;}
+
+.reveal{opacity:0;transform:translateY(28px);}
+.magnetic{will-change:transform;}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-mark">PORSCHE</div>
+  <div class="gauge">
+    <svg viewBox="0 0 120 120"><circle class="gauge-track" cx="60" cy="60" r="52"/><circle class="gauge-fill" cx="60" cy="60" r="52"/></svg>
+    <div class="gauge-pct" id="loaderPct">0%</div>
+  </div>
+</div>
+
+<div id="boost-bar"></div>
+<div id="boost-readout">BOOST <span id="boostVal">0.0 bar</span></div>
+<div id="cursor-glow"></div>
+
+<!-- video runs fixed behind the entire page, not just the hero -->
+<div class="video-bg" id="videoBg">
+  <video autoplay muted loop playsinline preload="auto" id="heroVideo" poster="assets/poster.jpg">
+    <source src="assets/hero.mp4" type="video/mp4">
+  </video>
+  <img src="assets/poster.jpg" alt="" id="stageFallback" aria-hidden="true">
+  <div class="veil"></div>
+  <div class="particles" id="particles"></div>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" id="videoToggle" aria-label="Turn video off" title="Turn video off">
+    <svg id="videoIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="13" height="12" rx="1.5"/><path d="M16 10l5-3v10l-5-3" stroke-linejoin="round"/></svg>
+  </button>
+  <button class="ctrl-btn" id="soundToggle" aria-label="Toggle sound" title="Toggle sound">
+    <svg id="soundIconOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16 8l5 8M21 8l-5 8" stroke-width="1.6"/></svg>
+  </button>
+</div>
+
+<header id="siteHeader">
+  <div class="logo">PORSCHE</div>
+  <nav class="links">
+    <a href="#top">Home</a>
+    <a href="#story">Performance</a>
+    <a href="#specs">Specifications</a>
+    <a href="#gallery">Gallery</a>
+    <a href="#final">Experience</a>
+  </nav>
+  <button class="nav-burger" id="burgerBtn" aria-label="Open menu"><span></span></button>
+</header>
+
+<div id="mnav">
+  <a href="#top">Home</a>
+  <a href="#story">Performance</a>
+  <a href="#specs">Specifications</a>
+  <a href="#gallery">Gallery</a>
+  <a href="#final">Experience</a>
+</div>
+
+<section class="hero" id="top">
+  <div class="hero-content">
+    <div class="hero-kicker">992 Generation · Coupe</div>
+    <h1 id="heroTitle">911<br><em>TURBO S</em></h1>
+    <p class="headline">Engineered Without Compromise</p>
+    <p class="sub">641 bhp&nbsp; · &nbsp;800 Nm&nbsp; · &nbsp;0–100 in 2.7s</p>
+    <div class="hero-ctas">
+      <a href="#specs" class="btn btn-primary magnetic">Explore Performance
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+      <a href="#gallery" class="btn btn-ghost magnetic" id="watchStoryBtn">Watch Story
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M10 9l5 3-5 3V9z" fill="currentColor"/></svg>
+      </a>
+    </div>
+  </div>
+  <div class="scroll-cue"><span>SCROLL</span><div class="line"></div></div>
+</section>
+
+<section class="section-pad" id="story">
+  <div class="wrap">
+    <div class="glass">
+      <div class="story-statement">
+        <div class="eyebrow" style="justify-content:center;margin-bottom:18px;">Performance story</div>
+        <h2><span class="num">0–100</span> km/h in <span class="num">2.7</span> seconds</h2>
+        <p>Launch control engaged · Twin VTG turbochargers spooled</p>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card reveal"><div class="v">641<sup>bhp</sup></div><div class="l">Maximum Power</div></div>
+        <div class="stat-card reveal"><div class="v">800<sup>Nm</sup></div><div class="l">Peak Torque</div></div>
+        <div class="stat-card reveal"><div class="v">330<sup>km/h</sup></div><div class="l">Top Speed</div></div>
+        <div class="stat-card reveal"><div class="v">31<sup>m</sup></div><div class="l">Braking, 100–0</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad" id="specs">
+  <div class="wrap">
+    <div class="glass">
+      <div class="section-head">
+        <div class="eyebrow">Technical specification</div>
+        <h2 class="section-title">Every figure earned on <span class="accent">the test track.</span></h2>
+      </div>
+      <div class="specs-grid">
+        <div class="turbine-wrap">
+          <div class="turbine">
+            <div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div>
+            <div class="fins">
+              <svg viewBox="0 0 200 200">
+                <g fill="none" stroke="#c8a464" stroke-width="1.2" opacity="0.8"><g id="finGroup"></g></g>
+              </svg>
+            </div>
+            <div class="turbine-core"><div class="rpm" id="rpmReadout">7,500</div><div class="rpm-l">RPM</div></div>
+            <div class="turbine-orbit"></div>
+          </div>
+        </div>
+        <div>
+          <div class="tabs">
+            <button class="tab active" data-tab="engine">Engine &amp; Performance</button>
+            <button class="tab" data-tab="chassis">Transmission &amp; Chassis</button>
+            <button class="tab" data-tab="mileage">Mileage</button>
+          </div>
+          <div class="spec-panel active" data-panel="engine">
+            <div class="spec-row"><span class="k">Engine</span><span class="v">Flat-6 Twin Turbo</span></div>
+            <div class="spec-row"><span class="k">Displacement</span><span class="v">3,591 cc</span></div>
+            <div class="spec-row"><span class="k">Max Power</span><span class="v">641 bhp @ 7,500 rpm</span></div>
+            <div class="spec-row"><span class="k">Max Torque</span><span class="v">800 Nm @ 2,500 rpm</span></div>
+            <div class="spec-row"><span class="k">Compression Ratio</span><span class="v">9.5:1</span></div>
+            <div class="spec-row"><span class="k">Bore × Stroke</span><span class="v">102 × 73.4 mm</span></div>
+            <div class="spec-row"><span class="k">Valvetrain</span><span class="v">DOHC, 4 valves/cyl</span></div>
+            <div class="spec-row"><span class="k">Turbocharging</span><span class="v">Twin VTG Turbos</span></div>
+          </div>
+          <div class="spec-panel" data-panel="chassis">
+            <div class="spec-row"><span class="k">Transmission</span><span class="v">8-Speed PDK</span></div>
+            <div class="spec-row"><span class="k">Drivetrain</span><span class="v">AWD · Porsche Traction Mgmt</span></div>
+            <div class="spec-row"><span class="k">Body</span><span class="v">Coupe (992 Generation)</span></div>
+            <div class="spec-row"><span class="k">Seating</span><span class="v">2+2</span></div>
+            <div class="spec-row"><span class="k">Ground Clearance</span><span class="v">109 mm</span></div>
+            <div class="spec-row"><span class="k">Boot Space</span><span class="v">132 + 145 L</span></div>
+          </div>
+          <div class="spec-panel" data-panel="mileage">
+            <div class="spec-row"><span class="k">City</span><span class="v">6 kmpl</span></div>
+            <div class="spec-row"><span class="k">Highway</span><span class="v">9 kmpl</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad" id="numbers">
+  <div class="wrap">
+    <div class="glass">
+      <div class="section-head" style="text-align:center;align-items:center;">
+        <div class="eyebrow">Numbers that matter</div>
+        <h2 class="section-title" style="text-align:center;">The figures behind the feeling.</h2>
+      </div>
+      <div class="numbers-grid">
+        <div class="num-card"><span class="big" data-count="641">0</span><span class="unit">bhp</span></div>
+        <div class="num-card"><span class="big" data-count="800">0</span><span class="unit">Nm</span></div>
+        <div class="num-card"><span class="big" data-count="2.7" data-decimal="1">0</span><span class="unit">sec, 0–100</span></div>
+        <div class="num-card"><span class="big" data-count="330">0</span><span class="unit">km/h</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="gallery">
+  <div class="gallery-pin">
+    <div class="wrap" style="margin-bottom:36px;">
+      <div class="eyebrow">Immersive experience</div>
+      <h2 class="section-title" style="margin-top:14px;">A closer look,<br><span class="accent">frame by frame.</span></h2>
+    </div>
+    <div class="gallery-track" id="galleryTrack">
+      <div class="g-card"><span class="idx">01</span><img src="assets/gallery/g1.jpg" alt="911 Turbo S front profile, staged in low light"><span class="tag">Front Profile</span></div>
+      <div class="g-card"><span class="idx">02</span><img src="assets/gallery/g3.jpg" alt="Close detail of wheel and side sill"><span class="tag">Wheel Detail</span></div>
+      <div class="g-card"><span class="idx">03</span><img src="assets/gallery/g2.jpg" alt="Side profile in motion through the city at night"><span class="tag">Side Profile</span></div>
+      <div class="g-card"><span class="idx">04</span><img src="assets/gallery/g4.jpg" alt="Headlight signature lit at night"><span class="tag">Lighting Signature</span></div>
+      <div class="g-card"><span class="idx">05</span><img src="assets/gallery/g5.jpg" alt="Car captured mid-drift on a wet road at night"><span class="tag">On the Limit</span></div>
+      <div class="g-card"><span class="idx">06</span><img src="assets/gallery/g6.jpg" alt="Car driving through an illuminated tunnel"><span class="tag">The Road Ahead</span></div>
+    </div>
+    <p class="gallery-mobile-hint">Drag or scroll →</p>
+  </div>
+</section>
+
+<section class="final" id="final">
+  <div class="wrap">
+    <div class="glass" style="display:inline-block;">
+      <div class="eyebrow" style="justify-content:center;">Configure your own</div>
+      <h2>The Ultimate 911.</h2>
+      <p>Experience the perfect balance of performance, technology, and precision engineering.</p>
+      <div class="hero-ctas">
+        <a href="#" class="btn btn-primary magnetic">Configure Now</a>
+        <a href="#" class="btn btn-ghost magnetic">Download Brochure</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-row">
+      <div class="logo" style="font-size:14px;">PORSCHE</div>
+      <div class="foot-links"><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a></div>
+      <div class="foot-social"><a href="#" aria-label="Instagram">IG</a><a href="#" aria-label="YouTube">YT</a><a href="#" aria-label="X">X</a></div>
+    </div>
+    <div class="foot-fine">© 2026 — Concept landing page built for demonstration purposes. Not an official Porsche AG property.</div>
+  </div>
+</footer>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+/* ---------- LOADER ---------- */
+window.addEventListener('DOMContentLoaded', () => {
+  const pctEl = document.getElementById('loaderPct');
+  const fill = document.querySelector('.gauge-fill');
+  let p = 0;
+  const t = setInterval(() => {
+    p += Math.random() * 14;
+    if (p >= 100) { p = 100; clearInterval(t); }
+    pctEl.textContent = Math.floor(p) + '%';
+    fill.style.strokeDashoffset = 326 - (326 * p / 100);
+    if (p === 100) {
+      setTimeout(() => {
+        document.getElementById('loader').classList.add('done');
+        startEntrance();
+      }, 280);
+    }
+  }, 90);
+});
+
+function startEntrance(){
+  gsap.fromTo('#heroTitle', {y:40, opacity:0}, {y:0, opacity:1, duration:1.1, ease:'power3.out'});
+  gsap.fromTo('.hero-kicker, .headline, .sub, .hero-ctas, .scroll-cue', {y:20, opacity:0}, {y:0, opacity:1, duration:1, delay:.25, stagger:.08, ease:'power3.out'});
+  gsap.fromTo('.controls', {opacity:0}, {opacity:1, duration:1, delay:.5, ease:'power2.out'});
+}
+
+/* ---------- PARTICLES ---------- */
+(() => {
+  const box = document.getElementById('particles');
+  for (let i=0;i<24;i++){
+    const s = document.createElement('span');
+    s.style.left = Math.random()*100+'%';
+    s.style.top = (50+Math.random()*50)+'%';
+    s.style.setProperty('--dx', (Math.random()*60-30)+'px');
+    s.style.animationDelay = (Math.random()*9)+'s';
+    s.style.animationDuration = (6+Math.random()*6)+'s';
+    box.appendChild(s);
+  }
+})();
+
+/* ---------- TURBINE FINS (SVG) ---------- */
+(() => {
+  const g = document.getElementById('finGroup');
+  const n = 9;
+  for (let i=0;i<n;i++){
+    const angle = (360/n)*i;
+    const blade = document.createElementNS('http://www.w3.org/2000/svg','path');
+    blade.setAttribute('d','M100,100 L130,40 Q138,30 122,28 L100,55 Z');
+    blade.setAttribute('transform', `rotate(${angle} 100 100)`);
+    blade.setAttribute('fill','rgba(200,164,100,0.12)');
+    g.appendChild(blade);
+  }
+})();
+
+/* ---------- RPM READOUT FLUTTER ---------- */
+(() => {
+  const el = document.getElementById('rpmReadout');
+  const vals = ['7,500','7,420','7,580','7,500','7,460'];
+  let i = 0;
+  setInterval(() => { el.textContent = vals[i % vals.length]; i++; }, 1400);
+})();
+
+/* ---------- NAV SCROLL STATE + BOOST BAR ---------- */
+const header = document.getElementById('siteHeader');
+const boostBar = document.getElementById('boost-bar');
+const boostVal = document.getElementById('boostVal');
+window.addEventListener('scroll', () => {
+  const sc = window.scrollY;
+  header.classList.toggle('scrolled', sc > 40);
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = max > 0 ? sc / max : 0;
+  boostBar.style.width = (pct*100) + '%';
+  boostVal.textContent = (pct*1.8).toFixed(1) + ' bar';
+}, {passive:true});
+
+/* ---------- MOBILE NAV ---------- */
+const burger = document.getElementById('burgerBtn');
+const mnav = document.getElementById('mnav');
+burger.addEventListener('click', () => mnav.classList.toggle('open'));
+mnav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mnav.classList.remove('open')));
+
+/* ---------- CURSOR GLOW + MAGNETIC BUTTONS ---------- */
+const glow = document.getElementById('cursor-glow');
+let gx=0, gy=0, mx=0, my=0;
+window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+gsap.ticker.add(() => {
+  gx += (mx - gx) * 0.15; gy += (my - gy) * 0.15;
+  glow.style.transform = `translate(${gx}px, ${gy}px) translate(-50%,-50%)`;
+});
+document.querySelectorAll('.magnetic').forEach(el => {
+  el.addEventListener('mousemove', e => {
+    const r = el.getBoundingClientRect();
+    const relX = e.clientX - (r.left + r.width/2);
+    const relY = e.clientY - (r.top + r.height/2);
+    gsap.to(el, {x: relX*0.25, y: relY*0.35, duration:.3, ease:'power2.out'});
+  });
+  el.addEventListener('mouseleave', () => gsap.to(el, {x:0, y:0, duration:.5, ease:'elastic.out(1,0.4)'}));
+});
+
+/* ---------- HERO PARALLAX ---------- */
+document.querySelector('.hero').addEventListener('mousemove', e => {
+  const x = (e.clientX / window.innerWidth - 0.5) * 18;
+  const y = (e.clientY / window.innerHeight - 0.5) * 14;
+  gsap.to('#heroTitle', {x, y, duration:.6, ease:'power2.out'});
+});
+
+/* ---------- SCROLL REVEALS ---------- */
+gsap.utils.toArray('.stat-card').forEach((card, i) => {
+  gsap.to(card, { opacity:1, y:0, duration:.8, ease:'power3.out', delay:i*0.08,
+    scrollTrigger:{ trigger: card, start:'top 88%' } });
+});
+gsap.utils.toArray('.spec-panel.active .spec-row').forEach((row,i) => {
+  gsap.to(row, { opacity:1, y:0, duration:.6, delay:i*0.05, ease:'power2.out',
+    scrollTrigger:{ trigger:'#specs', start:'top 65%' } });
+});
+gsap.utils.toArray('.section-head').forEach(h => {
+  gsap.fromTo(h, {opacity:0, y:24}, {opacity:1, y:0, duration:.9, ease:'power3.out',
+    scrollTrigger:{ trigger:h, start:'top 85%' }});
+});
+
+/* ---------- TABS ---------- */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.spec-panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    const panel = document.querySelector(`.spec-panel[data-panel="${tab.dataset.tab}"]`);
+    panel.classList.add('active');
+    gsap.fromTo(panel.querySelectorAll('.spec-row'), {opacity:0,y:10}, {opacity:1,y:0,duration:.5,stagger:.05,ease:'power2.out'});
+  });
+});
+
+/* ---------- COUNTERS ---------- */
+const counters = document.querySelectorAll('[data-count]');
+const counterObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting){
+      const el = entry.target;
+      const target = parseFloat(el.dataset.count);
+      const decimals = parseInt(el.dataset.decimal || '0');
+      const obj = {v:0};
+      gsap.to(obj, { v: target, duration:1.8, ease:'power2.out',
+        onUpdate: () => { el.textContent = obj.v.toFixed(decimals); } });
+      counterObserver.unobserve(el);
+    }
+  });
+}, {threshold:0.5});
+counters.forEach(c => counterObserver.observe(c));
+
+/* ---------- GALLERY: plain native horizontal scroll, no scroll-jacking ---------- */
+/* (intentionally no JS here — .gallery-track scrolls horizontally on its own via CSS overflow-x) */
+
+/* ---------- FINAL CTA REVEAL ---------- */
+gsap.fromTo('.final .glass', {opacity:0,y:24}, {opacity:1,y:0,duration:1,ease:'power3.out',
+  scrollTrigger:{ trigger:'.final', start:'top 70%' }});
+
+/* ---------- SOUND TOGGLE ---------- */
+const video = document.getElementById('heroVideo');
+const soundBtn = document.getElementById('soundToggle');
+const watchStoryBtn = document.getElementById('watchStoryBtn');
+const ICON_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16.5 8.5a5 5 0 010 7M19.5 6a8.5 8.5 0 010 12" /></svg>';
+const ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16 8l5 8M21 8l-5 8"/></svg>';
+function setSound(on){
+  video.muted = !on;
+  soundBtn.innerHTML = on ? ICON_ON : ICON_OFF;
+}
+soundBtn.addEventListener('click', () => setSound(video.muted));
+watchStoryBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('gallery').scrollIntoView({behavior:'smooth'});
+  video.currentTime = 0;
+  setSound(true);
+  video.play();
+});
+
+/* ---------- VIDEO ON/OFF TOGGLE ---------- */
+const videoBg = document.getElementById('videoBg');
+const videoToggle = document.getElementById('videoToggle');
+const videoIcon = document.getElementById('videoIcon');
+const ICON_VIDEO_ON = '<rect x="3" y="6" width="13" height="12" rx="1.5"/><path d="M16 10l5-3v10l-5-3" stroke-linejoin="round"/>';
+const ICON_VIDEO_OFF = '<rect x="3" y="6" width="13" height="12" rx="1.5"/><path d="M16 10l5-3v10l-5-3" stroke-linejoin="round"/><path d="M2 2l20 20" />';
+function setVideoEnabled(on){
+  videoBg.classList.toggle('video-off', !on);
+  videoToggle.classList.toggle('is-off', !on);
+  videoIcon.innerHTML = on ? ICON_VIDEO_ON : ICON_VIDEO_OFF;
+  videoToggle.title = on ? 'Turn video off' : 'Turn video on';
+  videoToggle.setAttribute('aria-label', videoToggle.title);
+  if (on){
+    video.play().catch(()=>{});
+    soundBtn.style.display = '';
+  } else {
+    video.pause();
+    setSound(false);
+    soundBtn.style.display = 'none';
+  }
+  try { localStorage.setItem('porsche-video-enabled', on ? '1' : '0'); } catch(e){}
+}
+videoToggle.addEventListener('click', () => setVideoEnabled(videoBg.classList.contains('video-off')));
+try { if (localStorage.getItem('porsche-video-enabled') === '0') setVideoEnabled(false); } catch(e){}
+
+/* ---------- REDUCED MOTION ---------- */
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  gsap.globalTimeline.timeScale(50);
+}
+</script>
+</body>
+</html>
